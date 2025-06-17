@@ -2,32 +2,34 @@
 local Camera = {}
 Camera.__index = Camera
 
-function Camera:new(x, y, viewportWidth, viewportHeight)
+function Camera:new(x, y, worldWidth, worldHeight)
     local o = {
         x = x,
         y = y,
-        viewportWidth = viewportWidth,
-        viewportHeight = viewportHeight,
-        scale = 1 -- Can be used for zooming
+        worldWidth  = worldWidth,
+        worldHeight = worldHeight,
+        scale   = 1,
+        offsetX = 0,
+        offsetY = 0,
     }
     setmetatable(o, self)
     return o
 end
 
 function Camera:lookAt(targetX, targetY)
-    -- Smooth camera movement (optional, but good for Jump King feel)
-    local lerpFactor = 0.05 -- Adjust for camera smoothness
-    self.x = self.x + (targetX - self.viewportWidth / 2 - self.x) * lerpFactor
-    self.y = self.y + (targetY - self.viewportHeight / 2 - self.y) * lerpFactor
-
-    -- Directly follow (less smooth)
-    -- self.x = targetX - self.viewportWidth / 2
-    -- self.y = targetY - self.viewportHeight / 2
+    local lerp = 0.05
+    local halfW = self.worldWidth  / 2
+    local halfH = self.worldHeight / 2
+    self.x = self.x + (targetX - halfW - self.x) * lerp
+    self.y = self.y + (targetY - halfH - self.y) * lerp
 end
 
 function Camera:attach()
     love.graphics.push()
+    -- center‐letterbox
+    love.graphics.translate(self.offsetX, self.offsetY)
     love.graphics.scale(self.scale, self.scale)
+    -- world offset
     love.graphics.translate(-self.x, -self.y)
 end
 
