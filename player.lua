@@ -163,19 +163,43 @@ function Player:update(dt, platforms)
         end
     end
 
-    -- Horizontal movement
+        -- Horizontal movement + edge-bounce on normal platforms
     self.x = self.x + self.vx * dt
+
     for _, platform in ipairs(platforms) do
         if self:checkCollision(platform) then
-            print("X-COLLISION DETECTED!")
-            if self.vx > 0 then
-                self.x = platform.x - self.width
-            elseif self.vx < 0 then
-                self.x = platform.x + platform.width
-            end
-            self.vx = 0
-            if self.isJumping then
-                self.committedJumpVx = 0
+            local isVertical = (platform.type == "vertical")
+
+            -- 1) mid-air bounce off normal platforms
+            if self.isJumping and not isVertical then
+                -- push you just outside the platform edge
+                if self.vx > 0 then
+                    self.x = platform.x - self.width
+                else
+                    self.x = platform.x + platform.width
+                end
+
+                -- reverse horizontal velocity (bounce)
+                self.vx = -self.vx
+                -- keep committedJumpVx in sync if you care about chaining
+                self.committedJumpVx = self.vx
+
+                -- **do not** touch vy here — vertical motion is unchanged
+
+            -- 2) all other X-collisions (ground-side hits, or vertical platforms)
+            else
+                -- on vertical platforms, you still slide/jump off as before
+                -- and on-ground or falling into a normal platform side you stop
+                if self.vx > 0 then
+                    self.x = platform.x - self.width
+                elseif self.vx < 0 then
+                    self.x = platform.x + platform.width
+                end
+
+                self.vx = 0
+                if self.isJumping then
+                    self.committedJumpVx = 0
+                end
             end
         end
     end
